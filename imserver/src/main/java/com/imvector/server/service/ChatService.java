@@ -21,8 +21,7 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
     private final IMessageManager messageManager;
 
     @Autowired
-    public ChatService(
-            IMessageManager messageManager) {
+    public ChatService(IMessageManager messageManager) {
         this.messageManager = messageManager;
     }
 

@@ -43,6 +43,11 @@ public class IMServiceHandler<T> extends SimpleChannelInboundHandler<IIMPacket> 
         logger.info("收到一条消息: {}", msg.getLogicServiceId());
 
         var handler = SpringUtils.getBean("Service" + msg.getLogicServiceId(), PacketInboundHandler.class);
+        if (handler == null) {
+            logger.error("业务层收到未知消息，将断开连接：{}", msg.getLogicServiceId());
+            ctx.close();
+            return;
+        }
         handler.packetRead(userDetail, ctx, msg);
     }
 

@@ -1,6 +1,7 @@
 package com.imvector.utils;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
@@ -18,20 +19,28 @@ public class SpringUtils implements ApplicationContextAware {
 
     private static ApplicationContext applicationContext;
 
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        SpringUtils.applicationContext = applicationContext;
-    }
-
     public static <T> T getBean(String beanName, Class<T> baseType) {
-        return applicationContext.getBean(beanName, baseType);
+        try {
+            return applicationContext.getBean(beanName, baseType);
+        } catch (NoSuchBeanDefinitionException e) {
+            return null;
+        }
     }
 
     public static <T> T getBean(Class<T> baseType) {
-        return applicationContext.getBean(baseType);
+        try {
+            return applicationContext.getBean(baseType);
+        } catch (NoSuchBeanDefinitionException e) {
+            return null;
+        }
     }
 
     public static <T> Map<String, T> getBeansOfType(Class<T> baseType) {
         return applicationContext.getBeansOfType(baseType);
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        SpringUtils.applicationContext = applicationContext;
     }
 }
