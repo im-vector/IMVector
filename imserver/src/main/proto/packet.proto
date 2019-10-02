@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+//只是定义模块名，需要自己再次定义导出包名
+package base;
+
+import "google/protobuf/any.proto";
+
+option java_package = "com.imvector.server.proto";
+option java_outer_classname = "Packet";
+
+enum ServiceId {
+    //系统服务，心跳之类的
+    SYSTEM = 0;
+    //用户服务
+    USER = 1;
+    //聊天
+    CHAT = 2;
+}
+
+//响应状态码
+enum Status {
+    //请求成功
+    OK = 0;
+    //服务错误
+    ERR_SERVER = -1;
+    //客户端错误
+    ERR_CLIENT = -2;
+}

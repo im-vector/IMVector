@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+import "packet.proto";
+//只是定义模块名，需要自己再次定义导出包名
+package system;
+
+option java_package = "com.imvector.server.proto.system";
+option java_outer_classname = "IMSystem";
+
+//命令Id是二级，但是又独立出来，所以命名 = ServiceId_CommentId
+enum CommandId {
+    //登录
+    SYSTEM_LOGIN = 0;
+    //登出
+    SYSTEM_LOGOUT = 1;
+    //心跳
+    SYSTEM_NOON = 6;
+}
+
+message LoginReq {
+    //用户的token
+    string token = 1;
+}
+
+message LoginResp {
+    //状态码
+    base.Status status = 1;
+    //提示信息，成功或者错误信息
+    string msg = 2;
+    //最大的msgId
+    int64 maxMsgId = 3;
+}
+
+//退出登录
+message LogoutOut {
+    int32 userId = 1;
+    LogoutStatus status = 2;
+    string seq = 3;
+}
+
+//响应状态码
+enum LogoutStatus {
+    //其他设备登录了这个账号
+    OTHER_DEVICE = 0;
+    //token失效，可能是修改密码，账号被冻结等
+    TOKEN_EXPIRED = 1;
+    //主动登出
+    LOGOUT = 2;
+}
