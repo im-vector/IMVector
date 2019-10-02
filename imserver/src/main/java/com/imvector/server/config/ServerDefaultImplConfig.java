@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
  * @date: 2019/10/02 04:00
  */
 @Configuration
-public class DefaultImplConfig {
+public class ServerDefaultImplConfig {
 
     /**
      * 登录服务默认实现
@@ -19,7 +19,7 @@ public class DefaultImplConfig {
      * @return 默认实现
      */
     @ConditionalOnMissingBean(LoginService.class)
-    @Bean("defaultIMProtocolCodec")
+    @Bean
     public ILoginService loginService() {
         return new LoginService();
     }

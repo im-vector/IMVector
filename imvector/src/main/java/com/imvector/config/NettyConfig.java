@@ -14,7 +14,7 @@ public class NettyConfig {
     /**
      * Netty 监听的端口
      */
-    private int port = 8082;
+    private int port = 9087;
     /**
      * IM 服务的阶段数量
      */

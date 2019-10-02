@@ -2,6 +2,7 @@ package com.imvector.server.logic;
 
 import com.imvector.proto.impl.IMPacket;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component;
  * @date: 2019/05/24 16:26
  */
 @Component
-@ConditionalOnBean(RedisConnectionFactory.class)
+@ConditionalOnClass(RedisConnectionFactory.class)
 public class IMPackageRedisTemplate extends RedisTemplate<String, Object> {
 
     public IMPackageRedisTemplate(RedisConnectionFactory connectionFactory) {

@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
  * @date: 2019/10/02 04:00
  */
 @Configuration
-public class DefaultImplConfig {
+public class CoreDefaultImplConfig {
 
     @ConditionalOnMissingBean(IIMProtocolCodec.class)
     @Bean("defaultIMProtocolCodec")
