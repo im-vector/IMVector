@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+}
+
+group 'com.imvector.sample'
+version '1.0.0'
+sourceCompatibility = 11
+
+repositories {
+    maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
+    mavenCentral()
+    maven { url "https://repo.spring.io/milestone" }
+}
+
+dependencies {
+
+    implementation project(':imvector')
+
+    implementation 'io.netty:netty-all:4.1.33.Final'
+    implementation 'org.springframework.boot:spring-boot-starter:2.1.3.RELEASE'
+    testImplementation('org.springframework.boot:spring-boot-starter-test:2.1.3.RELEASE')
+}

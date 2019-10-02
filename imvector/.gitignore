@@ -1,0 +1,8 @@
+# mac
+.DS_Store
+
+# 编译文件
+/out
+/build
+/lib
+
