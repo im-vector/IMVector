@@ -19,19 +19,19 @@ public final class IMUtil {
      * @param messageOrBuilder 消息体
      * @return 新的Header
      */
-    public static IMPacket newHeader(Packet.ServiceId serviceId,
+    public static IMPacket newPacket(Packet.ServiceId serviceId,
                                      ProtocolMessageEnum commandId,
                                      MessageOrBuilder messageOrBuilder) {
 
-        Message message;
+        byte[] bytes = {};
         if (messageOrBuilder instanceof Message) {
-            message = (Message) messageOrBuilder;
-        } else {
-            message = ((Message.Builder) messageOrBuilder).build();
+            bytes = ((Message) messageOrBuilder).toByteArray();
+        } else if (messageOrBuilder instanceof Message.Builder) {
+            bytes = ((Message.Builder) messageOrBuilder).build().toByteArray();
         }
-        var msg = new IMPacket((short) serviceId.getNumber(),
-                (short) commandId.getNumber(),
-                message.toByteArray());
+
+        IMPacket msg = new IMPacket((short) serviceId.getNumber(),
+                (short) commandId.getNumber(), bytes);
         return msg;
     }
 
@@ -42,7 +42,7 @@ public final class IMUtil {
      * @param messageOrBuilder 消息体
      * @return 新的Header
      */
-    public static IMPacket copyHeader(IMPacket srcHeader,
+    public static IMPacket copyPacket(IMPacket srcHeader,
                                       MessageOrBuilder messageOrBuilder) {
 
         Message message;

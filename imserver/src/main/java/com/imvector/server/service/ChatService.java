@@ -62,7 +62,7 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
             msgRespBuilder.setMsg("非法msgId");
             msgRespBuilder.setStatus(Packet.Status.ERR_CLIENT);
 
-            var packetResp = IMUtil.copyHeader(header, msgRespBuilder);
+            var packetResp = IMUtil.copyPacket(header, msgRespBuilder);
 
             ctx.writeAndFlush(packetResp);
             return;
@@ -84,7 +84,7 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
             msgOutBuilder.setUri(msgReq.getUri());
             msgOutBuilder.setContent(msgReq.getContent());
 
-            var msgOut = IMUtil.newHeader(Packet.ServiceId.CHAT,
+            var msgOut = IMUtil.newPacket(Packet.ServiceId.CHAT,
                     Chat.CommandId.CHAT_MSG_OUT,
                     msgOutBuilder);
             //异步的，很快，不会阻塞
@@ -95,7 +95,7 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
         var msgRespBuilder = Chat.MsgResp.newBuilder();
         msgRespBuilder.setMsgId(msgReq.getMsgId());
 
-        var packetResp = IMUtil.copyHeader(header, msgRespBuilder);
+        var packetResp = IMUtil.copyPacket(header, msgRespBuilder);
         ctx.writeAndFlush(packetResp);
 
     }

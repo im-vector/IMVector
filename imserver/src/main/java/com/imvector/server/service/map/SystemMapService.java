@@ -21,10 +21,6 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
 
     private final ILoginService loginService;
     private Logger logger = LoggerFactory.getLogger(SystemMapService.class);
-    /**
-     * 是否处理了心跳，连接后的第一个请求可能是心跳
-     */
-    private boolean handledNoon;
 
     public SystemMapService(ILoginService loginService) {
         this.loginService = loginService;
@@ -33,20 +29,15 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
     @Override
     public UserDetail packetRead(ChannelHandlerContext ctx, IMPacket msg) throws Exception {
 
-        if (!handledNoon) {
-            //处理心跳
-            if (msg.getServiceId() == Packet.ServiceId.SYSTEM_VALUE
-                    && msg.getCommandId() == IMSystem.CommandId.SYSTEM_NOON_VALUE) {
-                //心跳，原封不动返回
-                logger.debug("收到心跳了");
-                ctx.writeAndFlush(msg);
-                handledNoon = true;
-                return null;
-            }
+        //处理心跳
+        if (msg.getCommandId() == IMSystem.CommandId.SYSTEM_NOON_VALUE) {
+            //心跳，原封不动返回
+            logger.debug("收到心跳了");
+            ctx.writeAndFlush(msg);
+            return null;
         }
 
-        if (msg.getServiceId() != Packet.ServiceId.SYSTEM_VALUE
-                || msg.getCommandId() != IMSystem.CommandId.SYSTEM_LOGIN_VALUE) {
+        if (msg.getCommandId() != IMSystem.CommandId.SYSTEM_LOGIN_VALUE) {
             //未登录，还想处理业务
             ctx.close();
             return null;
@@ -61,7 +52,7 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
         login.setStatus(userId > 0 ? Packet.Status.OK : Packet.Status.ERR_CLIENT);
         login.setMaxMsgId(msgId);
 
-        var resp = IMUtil.copyHeader(msg, login);
+        var resp = IMUtil.copyPacket(msg, login);
 
         ctx.writeAndFlush(resp);
 
@@ -83,7 +74,7 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
     private Object[] login(IMPacket msg) throws Exception {
         var login = IMSystem.LoginReq.parseFrom(msg.getBody());
         var userId = loginService.login(login.getToken());
-        var msgId = 0;
+        var msgId = 0L;
         return new Object[]{userId, msgId};
     }
 }
