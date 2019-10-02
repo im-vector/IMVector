@@ -25,3 +25,8 @@ IMVector I'm Vector 向量协议通信
     - 图片
     - 语音
     - 视频
+
+### 运行Sample
+
+直接运行App 的main 方法即可
+
