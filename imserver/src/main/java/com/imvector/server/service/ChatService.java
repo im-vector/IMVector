@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 @Service("Service" + Packet.ServiceId.CHAT_VALUE)
 public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
 
-    private final IMessageManager messageManager;
+    private final IMessageManager<UserDetail, IMPacket> messageManager;
 
     @Autowired
     public ChatService(IMessageManager messageManager) {
@@ -87,7 +87,7 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
                     Chat.CommandId.CHAT_MSG_OUT,
                     msgOutBuilder);
             //异步的，很快，不会阻塞
-            messageManager.sendMessage(msgReq.getTo(), msgOut);
+            messageManager.sendMessage(new UserDetail(msgReq.getTo()), msgOut);
         }
 
         //4. 给出响应，告诉发送方，服务器已经收到消息了

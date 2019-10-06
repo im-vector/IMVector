@@ -13,18 +13,6 @@ repositories {
     maven { url "https://repo.spring.io/milestone" }
 }
 
-
-build {
-    doLast {
-        def appName = "${rootProject.name}-${version}.jar"
-        copy {
-            from "build/libs/${appName}"
-            into "lib"
-            rename("$appName", "imvector-${version}.jar")
-        }
-    }
-}
-
 task sourcesJar(type: Jar) {
     archiveClassifier = 'sources'
     from sourceSets.main.allJava

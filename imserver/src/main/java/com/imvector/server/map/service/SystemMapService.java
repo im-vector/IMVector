@@ -1,4 +1,4 @@
-package com.imvector.server.service.map;
+package com.imvector.server.map.service;
 
 import com.imvector.map.MapInboundHandler;
 import com.imvector.proto.impl.IMPacket;
@@ -75,6 +75,10 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
         var login = IMSystem.LoginReq.parseFrom(msg.getBody());
         var userId = loginService.login(login.getToken());
         var msgId = 0L;
+        if (msgId == 0L) {
+            msgId = ((long) userId) << 32;
+            msgId += 1;
+        }
         return new Object[]{userId, msgId};
     }
 }

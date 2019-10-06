@@ -1,5 +1,7 @@
 package com.imvector.server.entity;
 
+import java.util.Objects;
+
 /**
  * @author: vector.huang
  * @date: 2019/10/02 01:57
@@ -38,5 +40,18 @@ public class UserDetail {
 
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UserDetail)) return false;
+        UserDetail that = (UserDetail) o;
+        return getUserId() == that.getUserId();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getUserId());
     }
 }

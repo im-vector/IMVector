@@ -1,7 +1,6 @@
 package com.imvector.server.logic;
 
 import com.imvector.proto.impl.IMPacket;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
