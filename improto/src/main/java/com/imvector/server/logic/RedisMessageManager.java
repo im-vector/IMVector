@@ -166,7 +166,7 @@ public class RedisMessageManager extends RedisMessageListenerContainer
     }
 
     @Override
-    public void sendMessageNotPlatform(UserDetail userDetail, IMPacket packet, int platform) {
+    public void sendMessageNotChannel(UserDetail userDetail, IMPacket packet, Channel channel) {
         // 只会出现在发送消息给自己的情况，所以不需要redis
         //尝试本地发送
         var userChannels = channels.get(userDetail);
@@ -177,7 +177,7 @@ public class RedisMessageManager extends RedisMessageListenerContainer
         // 需要保证全部客户端连接到同一台服务器
         // 全部平台都发送过去
         userChannels.forEach((k, session) -> {
-            if (k == platform) {
+            if (channel == session.getChannel()) {
                 return;
             }
             // 需要版本号一致

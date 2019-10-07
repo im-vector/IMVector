@@ -69,7 +69,7 @@ public class MemoryMessageManager<T extends IMClientPlatform, P extends IIMPacke
     }
 
     @Override
-    public void sendMessageNotPlatform(T userDetail, P packet, int platform) {
+    public void sendMessageNotChannel(T userDetail, P packet, Channel channel) {
 
         // 直接发送，如果不在线消息将会被忽略
         var userChannels = channels.get(userDetail);
@@ -78,9 +78,9 @@ public class MemoryMessageManager<T extends IMClientPlatform, P extends IIMPacke
         }
 
         // 全部平台都发送过去
-        userChannels.forEach((k, channel) -> {
-            if (k != platform) {
-                channel.writeAndFlush(packet);
+        userChannels.forEach((k, localChannel) -> {
+            if (channel != localChannel) {
+                localChannel.writeAndFlush(packet);
             }
         });
     }

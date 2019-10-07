@@ -11,6 +11,7 @@ import com.imvector.proto.impl.IMProtocolCodec;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 /**
  * @author: vector.huang
@@ -39,6 +40,7 @@ public class CoreDefaultImplConfig {
 
     @ConditionalOnMissingBean(IMessageManager.class)
     @Bean
+    @Order(Integer.MAX_VALUE - 2000)
     public IMessageManager iMessageManager() {
         return new MemoryMessageManager();
     }

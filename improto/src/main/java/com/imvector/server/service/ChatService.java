@@ -53,27 +53,13 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
         //获取msg req
         var msgReq = Chat.MsgReq.parseFrom(header.getBody());
 
-        //1. 判断合法性
-        var msgId = msgReq.getMsgId();
-        //把UserId 读取出来
-        var msgUserId = msgId >> 32;
-        if (msgUserId != userId) {
-            //非法的msgId
-            var msgRespBuilder = Chat.MsgResp.newBuilder();
-            msgRespBuilder.setMsgId(msgReq.getMsgId());
-            msgRespBuilder.setMsg("非法msgId");
-            msgRespBuilder.setStatus(Packet.Status.ERR_CLIENT);
-
-            var packetResp = IMUtil.copyPacket(header, msgRespBuilder);
-
-            ctx.writeAndFlush(packetResp);
-            return;
+        //1. 保存到数据库，返回接口为是否成功
+        boolean already = false;
+        if (chatDao != null) {
+            already = chatDao.save(header.getSeq(), msgReq);
         }
 
-        //2. 保存到数据库，返回接口为是否成功
-        boolean already = chatDao.save(header.getSeq(), msgReq);
-
-        //3. 不是已经发送够的，就转发给对方（发布到redis）
+        //2. 不是已经发送够的，就转发给对方（发布到redis）
         if (!already) {
             var msgOutBuilder = Chat.MsgOut.newBuilder();
             msgOutBuilder.setFrom(userId);
@@ -90,11 +76,15 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
                     Chat.CommandId.CHAT_MSG_OUT,
                     msgOutBuilder);
             //异步的，很快，不会阻塞
-            messageManager.sendMessage(new UserDetail(msgReq.getTo()), msgOut);
+            if (userId == msgReq.getTo()) {
+                messageManager.sendMessageNotChannel(new UserDetail(msgReq.getTo()), msgOut, ctx.channel());
+            } else {
+                messageManager.sendMessage(new UserDetail(msgReq.getTo()), msgOut);
+            }
         }
 
 
-        //4. 给出响应，告诉发送方，服务器已经收到消息了
+        //3. 给出响应，告诉发送方，服务器已经收到消息了
         var msgRespBuilder = Chat.MsgResp.newBuilder();
         msgRespBuilder.setMsgId(msgReq.getMsgId());
 

@@ -37,7 +37,7 @@ public interface IMessageManager<T, P extends IIMPacket> {
      *
      * @param userDetail 用户详情
      * @param packet     发送的消息
-     * @param platform   平台
+     * @param channel    排除的Channel
      */
-    void sendMessageNotPlatform(T userDetail, P packet, int platform);
+    void sendMessageNotChannel(T userDetail, P packet, Channel channel);
 }
