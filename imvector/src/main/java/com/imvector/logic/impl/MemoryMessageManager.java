@@ -4,6 +4,8 @@ import com.imvector.logic.IMClientPlatform;
 import com.imvector.logic.IMessageManager;
 import com.imvector.proto.IIMPacket;
 import io.netty.channel.Channel;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author: vector.huang
  * @date: 2019/10/02 02:57
  */
+@Component("memoryMessageManager")
+@ConditionalOnMissingBean(name = {"customMessageManager", "redisMessageManager", "protoMemoryMessageManager"})
 public class MemoryMessageManager<T extends IMClientPlatform, P extends IIMPacket> implements IMessageManager<T, P> {
 
     /**
@@ -31,7 +35,7 @@ public class MemoryMessageManager<T extends IMClientPlatform, P extends IIMPacke
 
         // 如果还存在相同平台的连接，直接断开
         var oldChannel = userChannels.get(userDetail.getPlatformSeq());
-        if(oldChannel != null){
+        if (oldChannel != null) {
             oldChannel.close();
         }
 

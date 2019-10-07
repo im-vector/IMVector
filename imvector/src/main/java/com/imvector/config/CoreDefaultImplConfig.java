@@ -38,11 +38,5 @@ public class CoreDefaultImplConfig {
         return new IMMapHandler(logicHandler);
     }
 
-    @ConditionalOnMissingBean(IMessageManager.class)
-    @Bean
-    @Order(Integer.MAX_VALUE - 2000)
-    public IMessageManager iMessageManager() {
-        return new MemoryMessageManager();
-    }
 
 }

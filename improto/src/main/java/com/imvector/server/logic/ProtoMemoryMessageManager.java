@@ -8,6 +8,7 @@ import com.imvector.server.proto.IMUtil;
 import com.imvector.server.proto.Packet;
 import com.imvector.server.proto.system.IMSystem;
 import io.netty.channel.Channel;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -17,7 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author: vector.huang
  * @date: 2019/10/07 18:50
  */
-@Component
+@Component("protoMemoryMessageManager")
+@ConditionalOnMissingBean(name = {"customMessageManager", "redisMessageManager"})
 public class ProtoMemoryMessageManager implements IMessageManager<UserDetail, IMPacket> {
 
     /**

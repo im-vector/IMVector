@@ -14,6 +14,8 @@ import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -31,8 +33,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author: vector.huang
  * @date: 2019/05/24 14:35
  */
-@Component
+@Component("redisMessageManager")
 @ConditionalOnClass(RedisConnectionFactory.class)
+@ConditionalOnMissingBean(name = "customMessageManager")
 public class RedisMessageManager extends RedisMessageListenerContainer
         implements IMessageManager<UserDetail, IMPacket>, MessageListener {
 

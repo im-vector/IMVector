@@ -18,12 +18,12 @@ import org.springframework.core.annotation.Order;
 public class ServerDefaultImplConfig {
 
 
-    @ConditionalOnMissingBean(IMessageManager.class)
-    @Bean
-    @Order(Integer.MAX_VALUE - 1000)
-    public IMessageManager iMessageManager() {
-        return new ProtoMemoryMessageManager();
-    }
+//    @ConditionalOnMissingBean(IMessageManager.class)
+//    @Bean
+//    @Order(Integer.MAX_VALUE - 1000)
+//    public IMessageManager iMessageManager() {
+//        return new ProtoMemoryMessageManager();
+//    }
 
     /**
      * 登录服务默认实现
