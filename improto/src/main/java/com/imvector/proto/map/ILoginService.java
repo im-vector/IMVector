@@ -1,7 +1,7 @@
-package com.imvector.server.map;
+package com.imvector.proto.map;
 
 import com.imvector.proto.impl.IMPacket;
-import com.imvector.server.proto.system.IMSystem;
+import com.imvector.proto.system.IMSystem;
 
 /**
  * @author: vector.huang

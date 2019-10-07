@@ -1,12 +1,12 @@
-package com.imvector.server.map.service;
+package com.imvector.proto.map.service;
 
 import com.imvector.map.MapInboundHandler;
 import com.imvector.proto.impl.IMPacket;
-import com.imvector.server.entity.UserDetail;
-import com.imvector.server.map.ILoginService;
-import com.imvector.server.proto.IMUtil;
-import com.imvector.server.proto.Packet;
-import com.imvector.server.proto.system.IMSystem;
+import com.imvector.proto.entity.UserDetail;
+import com.imvector.proto.map.ILoginService;
+import com.imvector.proto.IMUtil;
+import com.imvector.proto.Packet;
+import com.imvector.proto.system.IMSystem;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

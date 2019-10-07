@@ -1,12 +1,12 @@
-package com.imvector.server.logic;
+package com.imvector.proto.logic;
 
 import com.imvector.logic.IMessageManager;
 import com.imvector.proto.impl.IMPacket;
-import com.imvector.server.entity.ChannelSession;
-import com.imvector.server.entity.UserDetail;
-import com.imvector.server.proto.IMUtil;
-import com.imvector.server.proto.Packet;
-import com.imvector.server.proto.system.IMSystem;
+import com.imvector.proto.entity.ChannelSession;
+import com.imvector.proto.entity.UserDetail;
+import com.imvector.proto.IMUtil;
+import com.imvector.proto.Packet;
+import com.imvector.proto.system.IMSystem;
 import io.netty.channel.Channel;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;

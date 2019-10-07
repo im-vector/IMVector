@@ -5,7 +5,7 @@ import "packet.proto";
 //只是定义模块名，需要自己再次定义导出包名
 package chat;
 
-option java_package = "com.imvector.server.proto.chat";
+option java_package = "com.imvector.proto.chat";
 option java_outer_classname = "Chat";
 
 //客户端发送一条消息

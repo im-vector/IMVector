@@ -1,4 +1,4 @@
-package com.imvector.server.logic;
+package com.imvector.proto.logic;
 
 import com.imvector.proto.impl.IMPacket;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;

@@ -1,12 +1,12 @@
-package com.imvector.server.service;
+package com.imvector.proto.service;
 
 import com.imvector.logic.IMessageManager;
 import com.imvector.logic.PacketInboundHandler;
 import com.imvector.proto.impl.IMPacket;
-import com.imvector.server.entity.UserDetail;
-import com.imvector.server.proto.IMUtil;
-import com.imvector.server.proto.Packet;
-import com.imvector.server.proto.chat.Chat;
+import com.imvector.proto.entity.UserDetail;
+import com.imvector.proto.IMUtil;
+import com.imvector.proto.Packet;
+import com.imvector.proto.chat.Chat;
 import com.imvector.utils.SpringUtils;
 import io.netty.channel.ChannelHandlerContext;
 import org.springframework.beans.factory.annotation.Autowired;

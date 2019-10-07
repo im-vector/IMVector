@@ -1,10 +1,11 @@
-package com.imvector.server.map.impl;
+package com.imvector.proto.map.impl;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.imvector.proto.impl.IMPacket;
-import com.imvector.server.map.ILoginService;
-import com.imvector.server.proto.Packet;
-import com.imvector.server.proto.system.IMSystem;
+import com.imvector.proto.map.ILoginService;
+import com.imvector.proto.Packet;
+import com.imvector.proto.system.IMSystem;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.stereotype.Component;
 
 /**
  * 默认的登录服务
@@ -12,6 +13,8 @@ import com.imvector.server.proto.system.IMSystem;
  * @author: vector.huang
  * @date: 2019/10/02 12:03
  */
+@Component("loginService")
+@ConditionalOnMissingBean(name = "customLoginService")
 public class LoginService implements ILoginService {
 
     private int toUserId(String token) {

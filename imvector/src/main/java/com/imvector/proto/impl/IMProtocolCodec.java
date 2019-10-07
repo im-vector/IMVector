@@ -3,6 +3,8 @@ package com.imvector.proto.impl;
 import com.imvector.proto.IIMProtocolCodec;
 import io.netty.channel.ChannelHandler;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.stereotype.Component;
 
 /**
  * IIMProtocolCodec 的默认实现
@@ -10,6 +12,8 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
  * @author: vector.huang
  * @date: 2019/10/02 01:00
  */
+@Component("iMProtocolCodec")
+@ConditionalOnMissingBean(name = "customIMProtocolCodec")
 public class IMProtocolCodec implements IIMProtocolCodec {
 
     @Override

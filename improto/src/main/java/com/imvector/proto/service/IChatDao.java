@@ -1,6 +1,6 @@
-package com.imvector.server.service;
+package com.imvector.proto.service;
 
-import com.imvector.server.proto.chat.Chat;
+import com.imvector.proto.chat.Chat;
 
 /**
  * @author: vector.huang

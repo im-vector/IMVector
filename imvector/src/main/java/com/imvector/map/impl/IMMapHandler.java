@@ -14,6 +14,8 @@ import java.util.concurrent.TimeUnit;
  * @author: vector.huang
  * @date: 2019/10/02 01:13
  */
+@Component("iMMapHandler")
+@ConditionalOnMissingBean(name = "customIMMapHandler")
 public class IMMapHandler implements IIMMapHandler {
 
     private final IIMLogicHandler logicHandler;

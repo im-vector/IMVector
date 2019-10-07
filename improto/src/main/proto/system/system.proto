@@ -4,7 +4,7 @@ import "packet.proto";
 //只是定义模块名，需要自己再次定义导出包名
 package system;
 
-option java_package = "com.imvector.server.proto.system";
+option java_package = "com.imvector.proto.system";
 option java_outer_classname = "IMSystem";
 
 //命令Id是二级，但是又独立出来，所以命名 = ServiceId_CommentId

@@ -14,6 +14,8 @@ import java.util.concurrent.TimeUnit;
  * @author: vector.huang
  * @date: 2019/10/02 01:50
  */
+@Component("iMLogicHandler")
+@ConditionalOnMissingBean(name = "customIMLogicHandler")
 public class IMLogicHandler<T> implements IIMLogicHandler<T> {
 
     @Override

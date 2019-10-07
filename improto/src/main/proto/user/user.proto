@@ -3,7 +3,7 @@ syntax = "proto3";
 //只是定义模块名，需要自己再次定义导出包名
 package user;
 
-option java_package = "com.imvector.server.proto.user";
+option java_package = "com.imvector.proto.user";
 option java_outer_classname = "IMUser";
 
 //命令Id是二级，但是又独立出来，所以命名 = ServiceId_CommentId

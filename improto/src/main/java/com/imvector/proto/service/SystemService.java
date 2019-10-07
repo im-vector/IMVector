@@ -1,10 +1,10 @@
-package com.imvector.server.service;
+package com.imvector.proto.service;
 
 import com.imvector.logic.PacketInboundHandler;
 import com.imvector.proto.impl.IMPacket;
-import com.imvector.server.entity.UserDetail;
-import com.imvector.server.proto.Packet;
-import com.imvector.server.proto.system.IMSystem;
+import com.imvector.proto.entity.UserDetail;
+import com.imvector.proto.Packet;
+import com.imvector.proto.system.IMSystem;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

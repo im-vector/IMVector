@@ -1,9 +1,10 @@
-package com.imvector.server.proto;
+package com.imvector.proto;
 
 import com.google.protobuf.Message;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.ProtocolMessageEnum;
 import com.imvector.proto.impl.IMPacket;
+import com.imvector.proto.Packet;
 
 /**
  * @author: vector.huang

@@ -1,4 +1,4 @@
-package com.imvector.server.entity;
+package com.imvector.proto.entity;
 
 import com.imvector.logic.IMClientPlatform;
 
