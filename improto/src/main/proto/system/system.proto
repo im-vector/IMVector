@@ -20,6 +20,9 @@ enum CommandId {
 message LoginReq {
     //用户的token
     string token = 1;
+    //支持的第二种登录方式
+    string username = 2;
+    string password = 3;
 }
 
 message LoginResp {
@@ -27,8 +30,10 @@ message LoginResp {
     base.Status status = 1;
     //提示信息，成功或者错误信息
     string msg = 2;
-    //最大的msgId
-    int64 maxMsgId = 3;
+    //最大的seq，用于去重的，可用seq > maxSeq
+    int32 maxSeq = 3;
+    //用户Id
+    int32 userId = 4;
 }
 
 //退出登录

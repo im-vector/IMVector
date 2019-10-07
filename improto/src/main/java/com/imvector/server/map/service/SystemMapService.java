@@ -44,19 +44,12 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
         }
 
         var loginResult = login(msg);
-        int userId = (int) loginResult[0];
-        long msgId = (long) loginResult[1];
-
-        //响应
-        var login = IMSystem.LoginResp.newBuilder();
-        login.setStatus(userId > 0 ? Packet.Status.OK : Packet.Status.ERR_CLIENT);
-        login.setMaxMsgId(msgId);
-
-        var resp = IMUtil.copyPacket(msg, login);
+        int userId = loginResult.getUserId();
+        var resp = IMUtil.copyPacket(msg, loginResult);
 
         ctx.writeAndFlush(resp);
 
-        if (userId <= 0) {
+        if (loginResult.getStatus() != Packet.Status.OK) {
             //登录出错了
             logger.info("用户登录失败");
             ctx.close();
@@ -71,14 +64,8 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
     /**
      * 登录
      */
-    private Object[] login(IMPacket msg) throws Exception {
+    private IMSystem.LoginResp login(IMPacket msg) throws Exception {
         var login = IMSystem.LoginReq.parseFrom(msg.getBody());
-        var userId = loginService.login(login.getToken());
-        var msgId = 0L;
-        if (msgId == 0L) {
-            msgId = ((long) userId) << 32;
-            msgId += 1;
-        }
-        return new Object[]{userId, msgId};
+        return loginService.login(login);
     }
 }
