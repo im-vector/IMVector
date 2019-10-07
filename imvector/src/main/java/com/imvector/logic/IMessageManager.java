@@ -32,4 +32,12 @@ public interface IMessageManager<T, P extends IIMPacket> {
      */
     void sendMessage(T userDetail, P packet);
 
+    /**
+     * 发送消息，排除指定平台
+     *
+     * @param userDetail 用户详情
+     * @param packet     发送的消息
+     * @param platform   平台
+     */
+    void sendMessageNotPlatform(T userDetail, P packet, int platform);
 }

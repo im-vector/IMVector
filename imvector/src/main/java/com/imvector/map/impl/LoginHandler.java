@@ -64,6 +64,7 @@ public class LoginHandler extends SimpleChannelInboundHandler<IIMPacket> {
             //登录成功，这个处理器就会替换为业务处理处理器
             //先移除不需要的处理器
             ctx.pipeline().remove(this);
+            //IdleStateHandler 需要特殊处理，如果第三层没有的话，那么就需要继承
             var idleHandler = ctx.pipeline().get(IdleStateHandler.class);
             if (idleHandler != null) {
                 for (ChannelHandler channelHandler : logicHandlers) {

@@ -1,14 +1,17 @@
 package com.imvector.server.entity;
 
+import com.imvector.logic.IMClientPlatform;
+
 import java.util.Objects;
 
 /**
  * @author: vector.huang
  * @date: 2019/10/02 01:57
  */
-public class UserDetail {
+public class UserDetail implements IMClientPlatform {
 
     private int userId;
+    private int platformSeq;
     /**
      * 使用的客户端版本
      */
@@ -17,13 +20,21 @@ public class UserDetail {
     public UserDetail() {
     }
 
+    /**
+     * 快速构建，用于发送消息
+     * @param userId 用户Id
+     */
     public UserDetail(int userId) {
         this.userId = userId;
     }
 
-    public UserDetail(int userId, int version) {
-        this.userId = userId;
-        this.version = version;
+    @Override
+    public int getPlatformSeq() {
+        return platformSeq;
+    }
+
+    public void setPlatformSeq(int platformSeq) {
+        this.platformSeq = platformSeq;
     }
 
     public int getUserId() {

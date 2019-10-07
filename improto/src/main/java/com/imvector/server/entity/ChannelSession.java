@@ -8,24 +8,15 @@ import io.netty.channel.Channel;
  */
 public class ChannelSession {
 
-    private int userId;
-    private int version;
+    private UserDetail userDetail;
     private Channel channel;
 
-    public int getUserId() {
-        return userId;
+    public UserDetail getUserDetail() {
+        return userDetail;
     }
 
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    public int getVersion() {
-        return version;
-    }
-
-    public void setVersion(int version) {
-        this.version = version;
+    public void setUserDetail(UserDetail userDetail) {
+        this.userDetail = userDetail;
     }
 
     public Channel getChannel() {

@@ -1,5 +1,6 @@
 package com.imvector.server.map;
 
+import com.imvector.proto.impl.IMPacket;
 import com.imvector.server.proto.system.IMSystem;
 
 /**
@@ -8,6 +9,6 @@ import com.imvector.server.proto.system.IMSystem;
  */
 public interface ILoginService {
 
-    IMSystem.LoginResp login(IMSystem.LoginReq req);
+    IMSystem.LoginResp login(IMPacket packet) throws Exception;
 
 }

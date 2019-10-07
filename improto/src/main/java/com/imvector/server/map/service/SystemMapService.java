@@ -27,25 +27,25 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
     }
 
     @Override
-    public UserDetail packetRead(ChannelHandlerContext ctx, IMPacket msg) throws Exception {
+    public UserDetail packetRead(ChannelHandlerContext ctx, IMPacket packet) throws Exception {
 
         //处理心跳
-        if (msg.getCommandId() == IMSystem.CommandId.SYSTEM_NOON_VALUE) {
+        if (packet.getCommandId() == IMSystem.CommandId.SYSTEM_NOON_VALUE) {
             //心跳，原封不动返回
             logger.debug("收到心跳了");
-            ctx.writeAndFlush(msg);
+            ctx.writeAndFlush(packet);
             return null;
         }
 
-        if (msg.getCommandId() != IMSystem.CommandId.SYSTEM_LOGIN_VALUE) {
+        if (packet.getCommandId() != IMSystem.CommandId.SYSTEM_LOGIN_VALUE) {
             //未登录，还想处理业务
             ctx.close();
             return null;
         }
 
-        var loginResult = login(msg);
+        var loginResult = loginService.login(packet);
         int userId = loginResult.getUserId();
-        var resp = IMUtil.copyPacket(msg, loginResult);
+        var resp = IMUtil.copyPacket(packet, loginResult);
 
         ctx.writeAndFlush(resp);
 
@@ -57,15 +57,13 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
         }
 
         logger.info("用户登录成功,{}", userId);
-        return new UserDetail(userId, msg.getVersion());
+        var userDetail = new UserDetail();
+        userDetail.setUserId(userId);
+        userDetail.setVersion(packet.getVersion());
 
+        // 用户判断不同的客户端，范围 [0,15]
+        userDetail.setPlatformSeq(packet.getSeq());
+        return userDetail;
     }
 
-    /**
-     * 登录
-     */
-    private IMSystem.LoginResp login(IMPacket msg) throws Exception {
-        var login = IMSystem.LoginReq.parseFrom(msg.getBody());
-        return loginService.login(login);
-    }
 }

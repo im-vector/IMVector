@@ -7,6 +7,7 @@ import com.imvector.server.entity.UserDetail;
 import com.imvector.server.proto.IMUtil;
 import com.imvector.server.proto.Packet;
 import com.imvector.server.proto.chat.Chat;
+import com.imvector.utils.SpringUtils;
 import io.netty.channel.ChannelHandlerContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,10 +20,12 @@ import org.springframework.stereotype.Service;
 public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
 
     private final IMessageManager<UserDetail, IMPacket> messageManager;
+    private final IChatDao chatDao;
 
     @Autowired
-    public ChatService(IMessageManager messageManager) {
+    public ChatService(IMessageManager<UserDetail, IMPacket> messageManager) {
         this.messageManager = messageManager;
+        chatDao = SpringUtils.getBean(IChatDao.class);
     }
 
     @Override
@@ -67,11 +70,11 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
             return;
         }
 
-        //2. 保存到数据库
-//        imMessageService.save(userId, header, msgReq);
+        //2. 保存到数据库，返回接口为是否成功
+        boolean already = chatDao.save(header.getSeq(), msgReq);
 
-        //3. 转发给对方（发布到redis）（发送给自己的就忽略）
-        if (msgReq.getTo() != userId) {
+        //3. 不是已经发送够的，就转发给对方（发布到redis）
+        if (!already) {
             var msgOutBuilder = Chat.MsgOut.newBuilder();
             msgOutBuilder.setFrom(userId);
             msgOutBuilder.setTo(msgReq.getTo());
@@ -89,6 +92,7 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
             //异步的，很快，不会阻塞
             messageManager.sendMessage(new UserDetail(msgReq.getTo()), msgOut);
         }
+
 
         //4. 给出响应，告诉发送方，服务器已经收到消息了
         var msgRespBuilder = Chat.MsgResp.newBuilder();

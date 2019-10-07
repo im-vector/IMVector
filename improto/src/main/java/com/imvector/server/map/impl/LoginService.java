@@ -1,5 +1,7 @@
 package com.imvector.server.map.impl;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.imvector.proto.impl.IMPacket;
 import com.imvector.server.map.ILoginService;
 import com.imvector.server.proto.Packet;
 import com.imvector.server.proto.system.IMSystem;
@@ -21,11 +23,20 @@ public class LoginService implements ILoginService {
     }
 
     @Override
-    public IMSystem.LoginResp login(IMSystem.LoginReq req) {
+    public IMSystem.LoginResp login(IMPacket packet) throws Exception {
 
         var resp = IMSystem.LoginResp.newBuilder();
+        // IMClient 平台判断
+        int imClientPlatform = packet.getSeq();
+        if(imClientPlatform < 0 || imClientPlatform > 15){
+            resp.setStatus(Packet.Status.ERR_CLIENT);
+            resp.setMsg("不支持的客户端");
+            return resp.build();
+        }
 
-        String token = req.getToken();
+        var login = IMSystem.LoginReq.parseFrom(packet.getBody());
+
+        String token = login.getToken();
         int userId = toUserId(token);
         if (userId < 0) {
             resp.setStatus(Packet.Status.ERR_CLIENT);

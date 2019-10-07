@@ -6,6 +6,8 @@ import com.imvector.logic.IMessageManager;
 import com.imvector.proto.impl.IMPacket;
 import com.imvector.server.entity.ChannelSession;
 import com.imvector.server.entity.UserDetail;
+import com.imvector.server.proto.IMUtil;
+import com.imvector.server.proto.Packet;
 import com.imvector.server.proto.chat.Chat;
 import com.imvector.server.proto.system.IMSystem;
 import io.netty.channel.Channel;
@@ -37,12 +39,9 @@ public class RedisMessageManager extends RedisMessageListenerContainer
     /**
      * 管理本地全部的Channel
      */
-    private final Map<Integer, ChannelSession> channels;
+    private final Map<UserDetail, Map<Integer, ChannelSession>> channels;
+
     private final IMPackageRedisTemplate redisTemplate;
-    /**
-     * 节点随机嘛，用来标识这个节点的
-     */
-    private final String nodeSeq;
     /**
      * IM 服务的节点数
      */
@@ -52,10 +51,6 @@ public class RedisMessageManager extends RedisMessageListenerContainer
      * 发送消息的
      */
     private String imMsgChannel = "IM_MSG";
-    /**
-     * 登录的
-     */
-    private String imLoginChannel = "IM_LOGIN";
 
     public RedisMessageManager(RedisConnectionFactory redisConnectionFactory,
                                IMPackageRedisTemplate redisTemplate, NettyConfig nettyConfig) {
@@ -64,14 +59,10 @@ public class RedisMessageManager extends RedisMessageListenerContainer
         setConnectionFactory(redisConnectionFactory);
         channels = new ConcurrentHashMap<>();
 
-        //获取随机数
-        nodeSeq = System.currentTimeMillis() + "" + Math.random();
-
         if (nettyConfig.getNodeNum() > 1) {
             //分布式服务
             var topics = new ArrayList<ChannelTopic>();
             topics.add(new ChannelTopic(imMsgChannel));
-            topics.add(new ChannelTopic(imLoginChannel));
 
             //这个方法不会抛出异常，如果订阅失败（例如，超时了，也不会出现错误，只是打印了个警告信息）
             //现在要求：当定义失败的时候，断开连接，请求重新登录
@@ -85,43 +76,84 @@ public class RedisMessageManager extends RedisMessageListenerContainer
     @Override
     public void addChannel(UserDetail userDetail, Channel channel) {
 
-        //本地保存
-        var channelSession = new ChannelSession();
-        channelSession.setUserId(userDetail.getUserId());
-        channelSession.setVersion(userDetail.getVersion());
-        channelSession.setChannel(channel);
+        var userChannels = channels.computeIfAbsent(userDetail, k -> new ConcurrentHashMap<>());
 
-        channels.put(userDetail.getUserId(), channelSession);
-        logger.info("在线用户个数: {}", channels.size());
+        // 如果还存在相同平台的连接，直接断开
+        var oldSession = userChannels.get(userDetail.getPlatformSeq());
+        if (oldSession != null) {
+            // 存在，1. 发送登出信息，2. 断开连接
+            var logoutOut = IMSystem.LogoutOut.newBuilder();
+            logoutOut.setUserId(userDetail.getUserId());
+            logoutOut.setStatus(IMSystem.LogoutStatus.OTHER_DEVICE);
+            var packet = IMUtil.newPacket(Packet.ServiceId.SYSTEM, IMSystem.CommandId.SYSTEM_LOGOUT, logoutOut);
+            var version = oldSession.getUserDetail().getVersion();
+            packet.setVersion(version);
+            // 发送
+            oldSession.getChannel().writeAndFlush(version);
+            // 断开
+            oldSession.getChannel().close();
+        }
 
+        var session = new ChannelSession();
+        session.setUserDetail(userDetail);
+        session.setChannel(channel);
+
+        userChannels.put(userDetail.getPlatformSeq(), session);
     }
 
     @Override
     public void removeChannel(UserDetail userDetail) {
-        //移除
-        channels.remove(userDetail.getUserId());
-        logger.info("在线用户个数: {}", channels.size());
+
+        var userChannels = channels.get(userDetail);
+        if (userChannels == null) {
+            return;
+        }
+        userChannels.remove(userDetail.getPlatformSeq());
+
+        // 如果没有了，整个移除
+        if (userChannels.isEmpty()) {
+            channels.remove(userDetail);
+        }
+    }
+
+    /**
+     * 发送消息到本地队列
+     */
+    private boolean sendLocalMessage(UserDetail userDetail, IMPacket packet) {
+        //尝试本地发送
+        var userChannels = channels.get(userDetail);
+        if (userChannels == null) {
+            return false;
+        }
+
+        // 需要保证全部客户端连接到同一台服务器
+        // 全部平台都发送过去
+        userChannels.forEach((k, session) -> {
+            // 需要版本号一致
+            packet.setVersion(session.getUserDetail().getVersion());
+            session.getChannel().writeAndFlush(packet);
+        });
+        return true;
     }
 
     /**
      * 发送消息到队列
      */
     @Override
-    public void sendMessage(UserDetail userDetail, IMPacket msg) {
+    public void sendMessage(UserDetail userDetail, IMPacket packet) {
 
         //尝试本地发送
-        var session = channels.get(userDetail.getUserId());
-        if (session != null) {
-            var channel = session.getChannel();
-            channel.writeAndFlush(msg);
+        var ok = sendLocalMessage(userDetail, packet);
+        if (ok) {
             return;
         }
 
+        // 本地没有发现，那么就去其他服务器找
         try {
             if (nettyConfig.getNodeNum() > 1) {
                 //尝试分布式发送
                 //可能在其他节点登录了
-                redisTemplate.convertAndSend(imMsgChannel, msg);
+                redisTemplate.convertAndSend(imMsgChannel, packet);
             }
         } catch (Exception e) {
             //当和Redis 断开连接之后，就可能出现异常
@@ -131,6 +163,27 @@ public class RedisMessageManager extends RedisMessageListenerContainer
             //Unable to unsubscribe from subscriptions
             logger.error("发布信息到Redis 错误", e);
         }
+    }
+
+    @Override
+    public void sendMessageNotPlatform(UserDetail userDetail, IMPacket packet, int platform) {
+        // 只会出现在发送消息给自己的情况，所以不需要redis
+        //尝试本地发送
+        var userChannels = channels.get(userDetail);
+        if (userChannels == null) {
+            return;
+        }
+
+        // 需要保证全部客户端连接到同一台服务器
+        // 全部平台都发送过去
+        userChannels.forEach((k, session) -> {
+            if (k == platform) {
+                return;
+            }
+            // 需要版本号一致
+            packet.setVersion(session.getUserDetail().getVersion());
+            session.getChannel().writeAndFlush(packet);
+        });
     }
 
     /**
@@ -153,42 +206,11 @@ public class RedisMessageManager extends RedisMessageListenerContainer
 
                 //发送给谁的
                 var to = msgOut.getTo();
-
                 //尝试本地发送
-                var session = channels.get(to);
-                if (session != null) {
-                    var channel = session.getChannel();
-                    //版本号必须一致
-                    header.setVersion(session.getVersion());
-                    channel.writeAndFlush(header);
-                }
+                sendLocalMessage(new UserDetail(to), header);
             } catch (InvalidProtocolBufferException e) {
                 logger.error("解析MsgOut 出错", e);
             }
-        } else if (topic.equals(imLoginChannel)) {
-            //其他终端登录了
-            try {
-                var logoutOut = IMSystem.LogoutOut.parseFrom(header.getBody());
-                if (nodeSeq.equals(logoutOut.getSeq())) {
-                    //自己登录，不是其他设备哦
-                    return;
-                }
-                //这个用户需要退出了，但是不能是自己哦
-                var userId = logoutOut.getUserId();
-
-                //尝试本地发送
-                var session = channels.get(userId);
-                if (session != null) {
-                    var channel = session.getChannel();
-                    //版本号必须一致
-                    header.setVersion(session.getVersion());
-                    channel.writeAndFlush(header);
-                    channel.close();
-                }
-            } catch (InvalidProtocolBufferException e) {
-                logger.error("解析LogoutOut 出错", e);
-            }
-
         } else {
             logger.warn("非法话题：{}", topic);
         }

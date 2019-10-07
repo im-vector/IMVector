@@ -40,7 +40,6 @@ message LoginResp {
 message LogoutOut {
     int32 userId = 1;
     LogoutStatus status = 2;
-    string seq = 3;
 }
 
 //响应状态码
