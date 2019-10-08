@@ -1,17 +1,19 @@
 package com.imvector.proto.logic;
 
 import com.imvector.logic.IMessageManager;
-import com.imvector.proto.impl.IMPacket;
-import com.imvector.proto.entity.ChannelSession;
-import com.imvector.proto.entity.UserDetail;
 import com.imvector.proto.IMUtil;
 import com.imvector.proto.Packet;
+import com.imvector.proto.entity.ChannelSession;
+import com.imvector.proto.entity.UserDetail;
+import com.imvector.proto.impl.IMPacket;
 import com.imvector.proto.system.IMSystem;
 import io.netty.channel.Channel;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -48,7 +50,7 @@ public class ProtoMemoryMessageManager implements IMessageManager<UserDetail, IM
             var version = oldSession.getUserDetail().getVersion();
             packet.setVersion(version);
             // 发送
-            oldSession.getChannel().writeAndFlush(version);
+            oldSession.getChannel().writeAndFlush(packet);
             // 断开
             oldSession.getChannel().close();
         }
@@ -82,15 +84,20 @@ public class ProtoMemoryMessageManager implements IMessageManager<UserDetail, IM
 
     }
 
+    @Override
+    public boolean onLine(UserDetail userDetail) {
+        return channels.containsKey(userDetail);
+    }
+
     /**
      * 发送消息到队列
      */
     @Override
-    public void sendMessage(UserDetail userDetail, IMPacket packet) {
+    public boolean sendMessage(UserDetail userDetail, IMPacket packet) {
         //尝试本地发送
         var userChannels = channels.get(userDetail);
         if (userChannels == null) {
-            return;
+            return false;
         }
 
         // 需要保证全部客户端连接到同一台服务器
@@ -100,6 +107,8 @@ public class ProtoMemoryMessageManager implements IMessageManager<UserDetail, IM
             packet.setVersion(session.getUserDetail().getVersion());
             session.getChannel().writeAndFlush(packet);
         });
+
+        return true;
     }
 
     @Override

@@ -21,9 +21,16 @@ public class NettyConfig {
     private int nodeNum = 1;
 
     /**
-     * 节点的各个主机，这个给客户端用的哦，需要做负载均衡
+     * 节点的主机 127.0.0.1
      */
-    private String[] hosts;
+    private String host = "127.0.0.1";
+
+    public NettyConfig() {
+    }
+
+    public NettyConfig(int port) {
+        this.port = port;
+    }
 
     public int getPort() {
         return port;
@@ -41,11 +48,11 @@ public class NettyConfig {
         this.nodeNum = nodeNum;
     }
 
-    public String[] getHosts() {
-        return hosts;
+    public String getHost() {
+        return host;
     }
 
-    public void setHosts(String[] hosts) {
-        this.hosts = hosts;
+    public void setHost(String host) {
+        this.host = host;
     }
 }

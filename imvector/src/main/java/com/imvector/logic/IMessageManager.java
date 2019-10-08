@@ -25,12 +25,20 @@ public interface IMessageManager<T, P extends IIMPacket> {
     void removeChannel(T userDetail);
 
     /**
+     * 用户是否在线
+     *
+     * @param userDetail 指定用户
+     * @return 是否在线
+     */
+    boolean onLine(T userDetail);
+
+    /**
      * 发送消息
      *
      * @param userDetail 用户详情
      * @param packet     发送的消息
      */
-    void sendMessage(T userDetail, P packet);
+    boolean sendMessage(T userDetail, P packet);
 
     /**
      * 发送消息，排除指定平台

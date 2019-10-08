@@ -34,9 +34,14 @@ message LoginResp {
     int32 maxSeq = 3;
     //用户Id
     int32 userId = 4;
+    // 切换主机，对应端口
+    int32 port = 5;
+    // 切换主机，如果不为空，就请切换
+    string host = 6;
+
 }
 
-//退出登录
+// 退出登录
 message LogoutOut {
     int32 userId = 1;
     LogoutStatus status = 2;
@@ -44,10 +49,10 @@ message LogoutOut {
 
 //响应状态码
 enum LogoutStatus {
-    //其他设备登录了这个账号
+    // 其他设备登录了这个账号
     OTHER_DEVICE = 0;
-    //token失效，可能是修改密码，账号被冻结等
+    // token失效，可能是修改密码，账号被冻结等
     TOKEN_EXPIRED = 1;
-    //主动登出
+    // 主动登出
     LOGOUT = 2;
 }

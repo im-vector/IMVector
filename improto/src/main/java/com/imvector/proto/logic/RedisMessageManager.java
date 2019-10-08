@@ -2,14 +2,10 @@ package com.imvector.proto.logic;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.imvector.config.NettyConfig;
-import com.imvector.logic.IMessageManager;
-import com.imvector.proto.impl.IMPacket;
-import com.imvector.proto.entity.ChannelSession;
-import com.imvector.proto.entity.UserDetail;
-import com.imvector.proto.IMUtil;
-import com.imvector.proto.Packet;
 import com.imvector.proto.chat.Chat;
-import com.imvector.proto.system.IMSystem;
+import com.imvector.proto.entity.UserDetail;
+import com.imvector.proto.impl.IMPacket;
+import io.lettuce.core.internal.HostAndPort;
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +14,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * redis 消息队列管理器
@@ -36,30 +32,38 @@ import java.util.concurrent.ConcurrentHashMap;
 @ConditionalOnClass(RedisConnectionFactory.class)
 @ConditionalOnMissingBean(name = "customMessageManager")
 public class RedisMessageManager extends RedisMessageListenerContainer
-        implements IMessageManager<UserDetail, IMPacket>, MessageListener {
+        implements IRedisMessageManager<UserDetail, IMPacket>, MessageListener {
+
+    private final Logger logger = LoggerFactory.getLogger(RedisMessageManager.class);
 
     /**
-     * 管理本地全部的Channel
+     * 组合本地链接
      */
-    private final Map<UserDetail, Map<Integer, ChannelSession>> channels;
+    private final ProtoMemoryMessageManager protoMemoryMessageManager;
 
-    private final IMPackageRedisTemplate redisTemplate;
     /**
      * IM 服务的节点数
      */
     private final NettyConfig nettyConfig;
-    private Logger logger = LoggerFactory.getLogger(RedisMessageManager.class);
+    private final IMPackageRedisTemplate redisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
     /**
      * 发送消息的
      */
-    private String imMsgChannel = "IM_MSG";
+    private final String imMsgChannel = "IM_MSG";
+    private final String IM_VECTOR_USERS = "IM_VECTOR_USERS";
 
     public RedisMessageManager(RedisConnectionFactory redisConnectionFactory,
-                               IMPackageRedisTemplate redisTemplate, NettyConfig nettyConfig) {
+                               IMPackageRedisTemplate redisTemplate,
+                               NettyConfig nettyConfig,
+                               StringRedisTemplate stringRedisTemplate) {
+        this.stringRedisTemplate = stringRedisTemplate;
+
+        protoMemoryMessageManager = new ProtoMemoryMessageManager();
+
         this.redisTemplate = redisTemplate;
         this.nettyConfig = nettyConfig;
         setConnectionFactory(redisConnectionFactory);
-        channels = new ConcurrentHashMap<>();
 
         if (nettyConfig.getNodeNum() > 1) {
             //分布式服务
@@ -77,77 +81,41 @@ public class RedisMessageManager extends RedisMessageListenerContainer
 
     @Override
     public void addChannel(UserDetail userDetail, Channel channel) {
+        protoMemoryMessageManager.addChannel(userDetail, channel);
 
-        var userChannels = channels.computeIfAbsent(userDetail, k -> new ConcurrentHashMap<>());
-
-        // 如果还存在相同平台的连接，直接断开
-        var oldSession = userChannels.get(userDetail.getPlatformSeq());
-        if (oldSession != null) {
-            // 存在，1. 发送登出信息，2. 断开连接
-            var logoutOut = IMSystem.LogoutOut.newBuilder();
-            logoutOut.setUserId(userDetail.getUserId());
-            logoutOut.setStatus(IMSystem.LogoutStatus.OTHER_DEVICE);
-            var packet = IMUtil.newPacket(Packet.ServiceId.SYSTEM, IMSystem.CommandId.SYSTEM_LOGOUT, logoutOut);
-            var version = oldSession.getUserDetail().getVersion();
-            packet.setVersion(version);
-            // 发送
-            oldSession.getChannel().writeAndFlush(version);
-            // 断开
-            oldSession.getChannel().close();
-        }
-
-        var session = new ChannelSession();
-        session.setUserDetail(userDetail);
-        session.setChannel(channel);
-
-        userChannels.put(userDetail.getPlatformSeq(), session);
+        // 告诉redis，我上线了
+        HashOperations<String, String, String> ops = stringRedisTemplate.opsForHash();
+        ops.put(IM_VECTOR_USERS, userDetail.getUserId() + "",
+                nettyConfig.getHost() + ":" + nettyConfig.getPort());
     }
 
     @Override
     public void removeChannel(UserDetail userDetail) {
+        protoMemoryMessageManager.removeChannel(userDetail);
 
-        var userChannels = channels.get(userDetail);
-        if (userChannels == null) {
-            return;
-        }
-        userChannels.remove(userDetail.getPlatformSeq());
-
-        // 如果没有了，整个移除
-        if (userChannels.isEmpty()) {
-            channels.remove(userDetail);
+        if (!onLine(userDetail)) {
+            // 告诉redis，我下线了
+            HashOperations<String, String, String> ops = stringRedisTemplate.opsForHash();
+            ops.delete(IM_VECTOR_USERS, userDetail.getUserId() + "");
         }
     }
 
-    /**
-     * 发送消息到本地队列
-     */
-    private boolean sendLocalMessage(UserDetail userDetail, IMPacket packet) {
-        //尝试本地发送
-        var userChannels = channels.get(userDetail);
-        if (userChannels == null) {
-            return false;
-        }
+    @Override
+    public boolean onLine(UserDetail userDetail) {
 
-        // 需要保证全部客户端连接到同一台服务器
-        // 全部平台都发送过去
-        userChannels.forEach((k, session) -> {
-            // 需要版本号一致
-            packet.setVersion(session.getUserDetail().getVersion());
-            session.getChannel().writeAndFlush(packet);
-        });
-        return true;
+        return protoMemoryMessageManager.onLine(userDetail);
     }
 
     /**
      * 发送消息到队列
      */
     @Override
-    public void sendMessage(UserDetail userDetail, IMPacket packet) {
+    public boolean sendMessage(UserDetail userDetail, IMPacket packet) {
 
         //尝试本地发送
-        var ok = sendLocalMessage(userDetail, packet);
+        var ok = protoMemoryMessageManager.sendMessage(userDetail, packet);
         if (ok) {
-            return;
+            return true;
         }
 
         // 本地没有发现，那么就去其他服务器找
@@ -165,27 +133,13 @@ public class RedisMessageManager extends RedisMessageListenerContainer
             //Unable to unsubscribe from subscriptions
             logger.error("发布信息到Redis 错误", e);
         }
+        return false;
     }
 
     @Override
     public void sendMessageNotChannel(UserDetail userDetail, IMPacket packet, Channel channel) {
-        // 只会出现在发送消息给自己的情况，所以不需要redis
-        //尝试本地发送
-        var userChannels = channels.get(userDetail);
-        if (userChannels == null) {
-            return;
-        }
 
-        // 需要保证全部客户端连接到同一台服务器
-        // 全部平台都发送过去
-        userChannels.forEach((k, session) -> {
-            if (channel == session.getChannel()) {
-                return;
-            }
-            // 需要版本号一致
-            packet.setVersion(session.getUserDetail().getVersion());
-            session.getChannel().writeAndFlush(packet);
-        });
+        protoMemoryMessageManager.sendMessageNotChannel(userDetail, packet, channel);
     }
 
     /**
@@ -209,13 +163,28 @@ public class RedisMessageManager extends RedisMessageListenerContainer
                 //发送给谁的
                 var to = msgOut.getTo();
                 //尝试本地发送
-                sendLocalMessage(new UserDetail(to), header);
+                protoMemoryMessageManager.sendMessage(new UserDetail(to), header);
             } catch (InvalidProtocolBufferException e) {
                 logger.error("解析MsgOut 出错", e);
             }
         } else {
             logger.warn("非法话题：{}", topic);
         }
+    }
+
+    @Override
+    public HostAndPort getOnLine(UserDetail userDetail) {
+        if (onLine(userDetail)) {
+            return null;
+        }
+
+        HashOperations<String, String, String> ops = stringRedisTemplate.opsForHash();
+        String hostPort = ops.get(IM_VECTOR_USERS, userDetail.getUserId() + "");
+
+        if (hostPort == null) {
+            return null;
+        }
+        return HostAndPort.parse(hostPort);
     }
 }
 

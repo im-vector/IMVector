@@ -1,12 +1,15 @@
 package com.imvector.proto.map.service;
 
+import com.imvector.logic.IMessageManager;
 import com.imvector.map.MapInboundHandler;
-import com.imvector.proto.impl.IMPacket;
-import com.imvector.proto.entity.UserDetail;
-import com.imvector.proto.map.ILoginService;
 import com.imvector.proto.IMUtil;
 import com.imvector.proto.Packet;
+import com.imvector.proto.entity.UserDetail;
+import com.imvector.proto.impl.IMPacket;
+import com.imvector.proto.logic.IRedisMessageManager;
+import com.imvector.proto.map.ILoginService;
 import com.imvector.proto.system.IMSystem;
+import com.imvector.utils.SpringUtils;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,9 +48,6 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
 
         var loginResult = loginService.login(packet);
         int userId = loginResult.getUserId();
-        var resp = IMUtil.copyPacket(packet, loginResult);
-
-        ctx.writeAndFlush(resp);
 
         if (loginResult.getStatus() != Packet.Status.OK) {
             //登录出错了
@@ -63,6 +63,30 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
 
         // 用户判断不同的客户端，范围 [0,15]
         userDetail.setPlatformSeq(packet.getSeq());
+
+        //判断是否在线
+        var messageManager = SpringUtils.getBean(IMessageManager.class);
+        if (messageManager instanceof IRedisMessageManager) {
+            var bool = messageManager.onLine(userDetail);
+            if (!bool) {
+                var hostPost = ((IRedisMessageManager) messageManager).getOnLine(userDetail);
+                if (hostPost != null) {
+                    // 说明在线，其他终端在其他地方上线了
+                    var builder = loginResult.newBuilderForType();
+                    builder.setHost(hostPost.getHostText());
+                    builder.setPort(hostPost.getPort());
+                    var resp = IMUtil.copyPacket(packet, loginResult);
+                    ctx.writeAndFlush(resp);
+
+                    // 不能进入业务逻辑层，客户端收到切换主机的时候主动断开连接
+                    ctx.close();
+                    return null;
+                }
+            }
+        }
+
+        var resp = IMUtil.copyPacket(packet, loginResult);
+        ctx.writeAndFlush(resp);
         return userDetail;
     }
 

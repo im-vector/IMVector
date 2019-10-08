@@ -28,25 +28,6 @@ public class LoginHandler extends SimpleChannelInboundHandler<IIMPacket> {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        super.channelActive(ctx);
-        logger.debug("连接进来了");
-
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
-        logger.debug("连接走了");
-    }
-
-    @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        super.channelRegistered(ctx);
-        logger.debug("连接注册了");
-    }
-
-    @Override
     protected void channelRead0(ChannelHandlerContext ctx, IIMPacket msg) throws Exception {
         logger.info("收到一条消息: {}", msg.getLogicServiceId());
 
@@ -63,6 +44,7 @@ public class LoginHandler extends SimpleChannelInboundHandler<IIMPacket> {
 
             //登录成功，这个处理器就会替换为业务处理处理器
             //先移除不需要的处理器
+            // 如果重写，需要自己移除map 层的处理器
             ctx.pipeline().remove(this);
             //IdleStateHandler 需要特殊处理，如果第三层没有的话，那么就需要继承
             var idleHandler = ctx.pipeline().get(IdleStateHandler.class);
@@ -81,7 +63,6 @@ public class LoginHandler extends SimpleChannelInboundHandler<IIMPacket> {
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        logger.debug("收到了userEvent{}", evt);
 
         if (evt instanceof IdleStateEvent) {
             ctx.close();

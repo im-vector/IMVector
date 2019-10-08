@@ -58,18 +58,25 @@ public class MemoryMessageManager<T extends IMClientPlatform, P extends IIMPacke
     }
 
     @Override
-    public void sendMessage(T userDetail, P packet) {
+    public boolean onLine(T userDetail) {
+        return channels.containsKey(userDetail);
+    }
+
+    @Override
+    public boolean sendMessage(T userDetail, P packet) {
 
         // 直接发送，如果不在线消息将会被忽略
         var userChannels = channels.get(userDetail);
         if (userChannels == null) {
-            return;
+            return false;
         }
 
         // 全部平台都发送过去
         userChannels.forEach((k, channel) -> {
             channel.writeAndFlush(packet);
         });
+
+        return true;
     }
 
     @Override
