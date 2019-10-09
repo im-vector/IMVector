@@ -62,6 +62,12 @@ public class LoginHandler extends SimpleChannelInboundHandler<IIMPacket> {
     }
 
     @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        logger.error("发生了异常，主动断开连接：{}", cause.getMessage(), cause);
+        ctx.close();
+    }
+
+    @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 
         if (evt instanceof IdleStateEvent) {

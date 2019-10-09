@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
  * @date: 2019/03/18 13:13
  */
 @Component
+@EnableConfigurationProperties(NettyConfig.class)
 public class IMServer implements ApplicationListener<ApplicationEvent> {
 
     private final NettyConfig nettyConfig;

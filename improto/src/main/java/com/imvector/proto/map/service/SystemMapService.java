@@ -56,7 +56,7 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
             return null;
         }
 
-        logger.info("用户登录成功,{}", userId);
+        logger.debug("用户登录成功,{}", userId);
         var userDetail = new UserDetail();
         userDetail.setUserId(userId);
         userDetail.setVersion(packet.getVersion());
@@ -77,7 +77,7 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
                     builder.setPort(hostPost.getPort());
                     var resp = IMUtil.copyPacket(packet, loginResult);
                     ctx.writeAndFlush(resp);
-
+                    logger.debug("请转移到指定服务器：{}", hostPost);
                     // 不能进入业务逻辑层，客户端收到切换主机的时候主动断开连接
                     ctx.close();
                     return null;

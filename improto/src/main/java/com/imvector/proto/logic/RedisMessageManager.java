@@ -28,9 +28,9 @@ import java.util.ArrayList;
  * @author: vector.huang
  * @date: 2019/05/24 14:35
  */
-@Component("redisMessageManager")
-@ConditionalOnClass(RedisConnectionFactory.class)
-@ConditionalOnMissingBean(name = "customMessageManager")
+//@Component("redisMessageManager")
+//@ConditionalOnClass(RedisConnectionFactory.class)
+//@ConditionalOnMissingBean(name = "customMessageManager")
 public class RedisMessageManager extends RedisMessageListenerContainer
         implements IRedisMessageManager<UserDetail, IMPacket>, MessageListener {
 
