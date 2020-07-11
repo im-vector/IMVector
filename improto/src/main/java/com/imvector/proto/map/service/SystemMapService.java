@@ -1,5 +1,6 @@
 package com.imvector.proto.map.service;
 
+import com.imvector.config.NettyConfig;
 import com.imvector.logic.IMessageManager;
 import com.imvector.map.MapInboundHandler;
 import com.imvector.proto.IMUtil;
@@ -23,10 +24,12 @@ import org.springframework.stereotype.Service;
 public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket> {
 
     private final ILoginService loginService;
+    private final NettyConfig nettyConfig;
     private Logger logger = LoggerFactory.getLogger(SystemMapService.class);
 
-    public SystemMapService(ILoginService loginService) {
+    public SystemMapService(ILoginService loginService, NettyConfig nettyConfig) {
         this.loginService = loginService;
+        this.nettyConfig = nettyConfig;
     }
 
     @Override
@@ -65,22 +68,24 @@ public class SystemMapService implements MapInboundHandler<UserDetail, IMPacket>
         userDetail.setPlatformSeq(packet.getSeq());
 
         //判断是否在线
-        var messageManager = SpringUtils.getBean(IMessageManager.class);
-        if (messageManager instanceof IRedisMessageManager) {
-            var bool = messageManager.onLine(userDetail);
-            if (!bool) {
-                var hostPost = ((IRedisMessageManager) messageManager).getOnLine(userDetail);
-                if (hostPost != null) {
-                    // 说明在线，其他终端在其他地方上线了
-                    var builder = loginResult.newBuilderForType();
-                    builder.setHost(hostPost.getHostText());
-                    builder.setPort(hostPost.getPort());
-                    var resp = IMUtil.copyPacket(packet, loginResult);
-                    ctx.writeAndFlush(resp);
-                    logger.debug("请转移到指定服务器：{}", hostPost);
-                    // 不能进入业务逻辑层，客户端收到切换主机的时候主动断开连接
-                    ctx.close();
-                    return null;
+        if(nettyConfig.getNodeNum() > 1){
+            var messageManager = SpringUtils.getBean(IMessageManager.class);
+            if (messageManager instanceof IRedisMessageManager) {
+                var bool = messageManager.onLine(userDetail);
+                if (!bool) {
+                    var hostPost = ((IRedisMessageManager) messageManager).getOnLine(userDetail);
+                    if (hostPost != null) {
+                        // 说明在线，其他终端在其他地方上线了
+                        var builder = loginResult.newBuilderForType();
+                        builder.setHost(hostPost.getHostText());
+                        builder.setPort(hostPost.getPort());
+                        var resp = IMUtil.copyPacket(packet, loginResult);
+                        ctx.writeAndFlush(resp);
+                        logger.debug("请转移到指定服务器：{}", hostPost);
+                        // 不能进入业务逻辑层，客户端收到切换主机的时候主动断开连接
+                        ctx.close();
+                        return null;
+                    }
                 }
             }
         }

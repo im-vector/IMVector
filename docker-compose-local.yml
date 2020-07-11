@@ -1,0 +1,18 @@
+version: '2'
+
+# 本地测试版本，和测试版本不同的地方volumes和nginx，全部挂载到local_mount_path
+services:
+
+  mall-admin-server:
+    image: registry.cn-shenzhen.aliyuncs.com/imvector/imvectorserver
+    volumes:
+      # 日志直接放和生产同一个目录下面
+      - ./logs:/tmp/mall-admin-server/logs
+      - /data:/data
+      # 指定环境变量
+    environment:
+      PARAMS: "-Dlogging.config=classpath:logback-local.xml"
+    mem_limit: 2048M
+    memswap_limit: 2048M
+    network_mode: "host"
+

@@ -1,0 +1,15 @@
+## 基础镜像，请直接确保只有在依赖改变的时候才build
+## 为了能更好地分层
+## registry.cn-shenzhen.aliyuncs.com/imvector/imvectorserver-base
+
+## docker build -t registry.cn-shenzhen.aliyuncs.com/imvector/imvectorserver-base -f Dockerfile.base .
+## docker push  registry.cn-shenzhen.aliyuncs.com/imvector/imvectorserver-base
+
+# 基础镜像, 需要的环境就是JDK
+FROM jboss/base-jdk:11
+
+# 使用root 操作
+USER root
+
+# 添加jar 文件到镜像中
+ADD /docker/lib /usr/local/imvector/lib

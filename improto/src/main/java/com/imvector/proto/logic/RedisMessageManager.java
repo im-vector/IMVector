@@ -9,8 +9,6 @@ import io.lettuce.core.internal.HostAndPort;
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -18,7 +16,6 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 
@@ -84,16 +81,18 @@ public class RedisMessageManager extends RedisMessageListenerContainer
         protoMemoryMessageManager.addChannel(userDetail, channel);
 
         // 告诉redis，我上线了
-        HashOperations<String, String, String> ops = stringRedisTemplate.opsForHash();
-        ops.put(IM_VECTOR_USERS, userDetail.getUserId() + "",
-                nettyConfig.getHost() + ":" + nettyConfig.getPort());
+        if (nettyConfig.getNodeNum() > 1) {
+            HashOperations<String, String, String> ops = stringRedisTemplate.opsForHash();
+            ops.put(IM_VECTOR_USERS, userDetail.getUserId() + "",
+                    nettyConfig.getHost() + ":" + nettyConfig.getPort());
+        }
     }
 
     @Override
     public void removeChannel(UserDetail userDetail) {
         protoMemoryMessageManager.removeChannel(userDetail);
 
-        if (!onLine(userDetail)) {
+        if (!onLine(userDetail) && nettyConfig.getNodeNum() > 1) {
             // 告诉redis，我下线了
             HashOperations<String, String, String> ops = stringRedisTemplate.opsForHash();
             ops.delete(IM_VECTOR_USERS, userDetail.getUserId() + "");

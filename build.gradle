@@ -1,4 +1,6 @@
 plugins {
+    id 'org.springframework.boot' version '2.2.8.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
     id 'java'
 }
 
@@ -8,19 +10,69 @@ sourceCompatibility = 11
 
 repositories {
     maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
+    mavenLocal()
     mavenCentral()
     maven { url "https://repo.spring.io/milestone" }
 }
+
+
+task copyJars(type: Copy) {
+    doFirst {
+        def dir = new File("${rootDir}/docker")
+        if (dir.exists()) {
+            dir.deleteDir()
+        }
+    }
+    from configurations.runtimeClasspath
+    // 目标位置
+    into 'docker/lib'
+}
+
+clean {
+    doLast {
+        def dir = new File("${rootDir}/docker")
+        if (dir.exists()) {
+            dir.deleteDir()
+        }
+    }
+}
+
+bootJar {
+    print("============= 开始编译 ===========")
+    def dir = new File("${rootDir}/docker/lib")
+    if (!dir.exists()) {
+        dir.mkdirs()
+    }
+    def cp = ''
+    dir.eachFile { name ->
+        cp += " lib/${name.name}"
+    }
+
+    manifest {
+        attributes 'Class-Path': cp
+    }
+    // 不打包全部的jar 文件
+    excludes = ["*.jar"]
+    doLast {
+        def appName = "${rootProject.name}-${archiveVersion.get()}.jar"
+        copy {
+            from "build/libs/${appName}"
+            into "docker"
+            rename("$appName", "app.jar")
+        }
+        print("============= 编译成功 ===========")
+    }
+}
+
 
 dependencies {
 
     implementation project(':improto')
     implementation project(':imvector')
 
-    implementation 'io.netty:netty-all:4.1.45.Final'
-//    implementation 'org.springframework.boot:spring-boot-starter-web:2.1.7.RELEASE'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator:2.2.8.RELEASE'
-    implementation 'org.springframework.boot:spring-boot-starter:2.2.8.RELEASE'
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis:2.2.8.RELEASE'
-    testImplementation('org.springframework.boot:spring-boot-starter-test:2.2.8.RELEASE')
+    implementation 'io.netty:netty-all:4.1.50.Final'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
 }

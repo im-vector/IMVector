@@ -1,5 +1,10 @@
 imvector:
 
   port: 9088
-  node-num: 2
+  node-num: 1
   host: 127.0.0.1
+
+
+#logging:
+#  config: classpath:logback-dev.xml
+
