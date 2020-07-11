@@ -10,7 +10,13 @@ import java.util.Objects;
  */
 public class UserDetail implements IMClientPlatform {
 
+    /**
+     * 用户ID
+     */
     private int userId;
+    /**
+     * 终端系列好，不同终端支持同时登录
+     */
     private int platformSeq;
     /**
      * 使用的客户端版本
@@ -53,6 +59,9 @@ public class UserDetail implements IMClientPlatform {
         this.version = version;
     }
 
+    /**
+     * 用户ID 一样就认为相等
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

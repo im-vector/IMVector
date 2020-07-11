@@ -37,7 +37,7 @@ publishing {
 }
 
 dependencies {
-    implementation 'io.netty:netty-all:4.1.33.Final'
-    implementation 'org.springframework.boot:spring-boot-starter:2.1.7.RELEASE'
-    testImplementation('org.springframework.boot:spring-boot-starter-test:2.1.7.RELEASE')
+    implementation 'io.netty:netty-all:4.1.45.Final'
+    implementation 'org.springframework.boot:spring-boot-starter:2.2.8.RELEASE'
+    testImplementation('org.springframework.boot:spring-boot-starter-test:2.2.8.RELEASE')
 }

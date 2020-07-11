@@ -9,6 +9,7 @@ import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.stereotype.Component;
 
 /**
+ * 每一帧数据的转码，IMPacket <=> byte[]
  * @author: vector.huang
  * @date: 2019/05/24 16:26
  */
