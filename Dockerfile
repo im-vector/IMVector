@@ -1,3 +1,6 @@
+## docker build -t registry.cn-shenzhen.aliyuncs.com/imvector/imvectorserver -f Dockerfile .
+## docker push  registry.cn-shenzhen.aliyuncs.com/imvector/imvectorserver
+
 # 基础镜像, 需要的环境就是JDK
 FROM registry.cn-shenzhen.aliyuncs.com/imvector/imvectorserver-base
 
@@ -8,10 +11,10 @@ USER root
 # Spring Boot 使用的内嵌 Tomcat 容器默认使用/tmp作为工作目录
 VOLUME /tmp
 
-ADD /docker/common /usr/local/imvector/lib
-
 # 添加jar 文件到镜像中
 ADD /docker/app.jar /usr/local/imvector/app.jar
+
+ADD /docker/common /usr/local/imvector/lib
 
 ENV PARAMS=""
 

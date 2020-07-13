@@ -15,6 +15,11 @@ repositories {
     maven { url "https://repo.spring.io/milestone" }
 }
 
+ext {
+    set('imvector', 'imvector-1.0.0.jar')
+    set('improto', 'improto-1.0.0.jar')
+    set('imrepository', 'imrepository-1.0.0.jar')
+}
 
 task copyJars(type: Copy) {
     doFirst {
@@ -27,6 +32,26 @@ task copyJars(type: Copy) {
     // 目标位置
     into 'docker/lib'
 }
+
+task mvCommonJar() {
+    def dir = new File("${rootDir}/docker/common");
+    if (!dir.exists()) {
+        dir.mkdirs();
+    }
+    def imvectorJar = new File("${rootDir}/docker/lib/${imvector}")
+    if (imvectorJar.exists()) {
+        imvectorJar.renameTo(new File("${rootDir}/docker/common/${imvector}"))
+    }
+    def improtoJar = new File("${rootDir}/docker/lib/${improto}")
+    if (improtoJar.exists()) {
+        improtoJar.renameTo(new File("${rootDir}/docker/common/${improto}"))
+    }
+    def imrepositoryJar = new File("${rootDir}/docker/lib/${imrepository}")
+    if (imrepositoryJar.exists()) {
+        imrepositoryJar.renameTo(new File("${rootDir}/docker/common/${imrepository}"))
+    }
+}
+
 
 clean {
     doLast {
@@ -47,6 +72,11 @@ bootJar {
     dir.eachFile { name ->
         cp += " lib/${name.name}"
     }
+
+    cp += " lib/${imvector}"
+    cp += " lib/${improto}"
+    cp = cp.trim()
+
 
     manifest {
         attributes 'Class-Path': cp
