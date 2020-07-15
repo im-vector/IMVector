@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+import "packet.proto";
+
+//只是定义模块名，需要自己再次定义导出包名
+package chat.room;
+
+option java_package = "com.imvector.proto.chat.room";
+option java_outer_classname = "Room";
+
+// 创建聊天室
+message CreateRoomReq {
+    // 聊天室的名称
+    string roomName = 1;
+}
+
+// 创建聊天室响应
+message CreateRoomResp {
+    //状态码
+    base.Status status = 1;
+    //提示信息，成功或者错误信息
+    string msg = 2;
+    // 32 位系列码
+    string roomNo = 3;
+}
+
+
+// 加入聊天室
+message JoinRoomReq {
+    // 32 位系列码
+    string roomNo = 1;
+}
+
+// 加入聊天室响应
+message JoinRoomResp {
+    //状态码
+    base.Status status = 1;
+    //提示信息，成功或者错误信息
+    string msg = 2;
+    // 32 位系列码
+    string roomNo = 3;
+}
+
+//命令Id是二级，但是又独立出来
+enum CommandId {
+    CREATE_ROOM = 0;
+    JOIN_ROOM = 1;
+}
