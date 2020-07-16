@@ -26,14 +26,38 @@ public class RoomService implements PacketInboundHandler<UserDetail, IMPacket> {
     @Override
     public void packetRead(UserDetail userDetail, ChannelHandlerContext ctx, IMPacket packet) throws Exception {
         switch (packet.getCommandId()) {
+            case Room.CommandId.JOIN_ROOM_VALUE: {
+                // 加入聊天室
+                var room = roomManager.joinRoom(userDetail, packet);
+
+                //3. 给出响应，告诉发送方，服务器已经收到消息了
+                var msgRespBuilder = Room.JoinRoomResp.newBuilder();
+                if(room == null){
+                    msgRespBuilder.setStatus(Packet.Status.ERR_SERVER);
+                    msgRespBuilder.setMsg("创建聊天室失败，请稍后再试");
+                }else{
+                    msgRespBuilder.setStatus(Packet.Status.OK);
+                    msgRespBuilder.setRoomNo(room.getRoomNo());
+                    msgRespBuilder.setRoomId(room.getRoomId());
+                }
+                var packetResp = IMUtil.copyPacket(packet, msgRespBuilder);
+                ctx.writeAndFlush(packetResp);
+                break;
+            }
             case Room.CommandId.CREATE_ROOM_VALUE:
                 // 创建聊天室
-                var roomNo = roomManager.createRoom(userDetail, packet);
+                var room = roomManager.createRoom(userDetail, packet);
 
                 //3. 给出响应，告诉发送方，服务器已经收到消息了
                 var msgRespBuilder = Room.CreateRoomResp.newBuilder();
-                msgRespBuilder.setStatus(roomNo == null ? Packet.Status.ERR_CLIENT : Packet.Status.OK);
-                msgRespBuilder.setRoomNo(roomNo);
+                if(room == null){
+                    msgRespBuilder.setStatus(Packet.Status.ERR_SERVER);
+                    msgRespBuilder.setMsg("创建聊天室失败，请稍后再试");
+                }else{
+                    msgRespBuilder.setStatus(Packet.Status.OK);
+                    msgRespBuilder.setRoomNo(room.getRoomNo());
+                    msgRespBuilder.setRoomId(room.getRoomId());
+                }
                 var packetResp = IMUtil.copyPacket(packet, msgRespBuilder);
                 ctx.writeAndFlush(packetResp);
                 break;

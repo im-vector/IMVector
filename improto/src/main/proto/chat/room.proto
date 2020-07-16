@@ -22,8 +22,9 @@ message CreateRoomResp {
     string msg = 2;
     // 32 位系列码
     string roomNo = 3;
+    // 聊天室ID，用来发送消息
+    int32 roomId = 4;
 }
-
 
 // 加入聊天室
 message JoinRoomReq {
@@ -39,6 +40,8 @@ message JoinRoomResp {
     string msg = 2;
     // 32 位系列码
     string roomNo = 3;
+    // 聊天室ID，用来发送消息
+    int32 roomId = 4;
 }
 
 //命令Id是二级，但是又独立出来

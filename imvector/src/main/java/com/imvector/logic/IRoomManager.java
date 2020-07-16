@@ -1,6 +1,9 @@
 package com.imvector.logic;
 
 import com.imvector.proto.IIMPacket;
+import com.imvector.vo.RoomVo;
+
+import java.util.Set;
 
 /**
  * @author: vector.huang
@@ -8,7 +11,9 @@ import com.imvector.proto.IIMPacket;
  */
 public interface IRoomManager<T, P extends IIMPacket> {
 
+    RoomVo createRoom(T userDetail, P pocket);
 
-    String createRoom(T userDetail, P pocket);
+    RoomVo joinRoom(T userDetail, P pocket);
 
+    Set<T> getUsers(int to);
 }

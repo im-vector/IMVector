@@ -1,12 +1,13 @@
 package com.imvector.proto.service;
 
 import com.imvector.logic.IMessageManager;
+import com.imvector.logic.IRoomManager;
 import com.imvector.logic.PacketInboundHandler;
-import com.imvector.proto.impl.IMPacket;
-import com.imvector.proto.entity.UserDetail;
 import com.imvector.proto.IMUtil;
 import com.imvector.proto.Packet;
 import com.imvector.proto.chat.Chat;
+import com.imvector.proto.entity.UserDetail;
+import com.imvector.proto.impl.IMPacket;
 import com.imvector.utils.SpringUtils;
 import io.netty.channel.ChannelHandlerContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +21,13 @@ import org.springframework.stereotype.Service;
 public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
 
     private final IMessageManager<UserDetail, IMPacket> messageManager;
+    private final IRoomManager<UserDetail, IMPacket> roomManager;
     private final IChatDao chatDao;
 
     @Autowired
-    public ChatService(IMessageManager<UserDetail, IMPacket> messageManager) {
+    public ChatService(IMessageManager<UserDetail, IMPacket> messageManager, IRoomManager<UserDetail, IMPacket> roomManager) {
         this.messageManager = messageManager;
+        this.roomManager = roomManager;
         chatDao = SpringUtils.getBean(IChatDao.class);
     }
 
@@ -32,8 +35,17 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
     public void packetRead(UserDetail userDetail, ChannelHandlerContext ctx, IMPacket header) throws Exception {
         switch (header.getCommandId()) {
             case Chat.CommandId.CHAT_MSG_VALUE:
-                //发送消息过来了
-                msgReq(userDetail.getUserId(), ctx, header);
+                //获取msg req
+                var msgReq = Chat.MsgReq.parseFrom(header.getBody());
+                switch (msgReq.getChatTypeValue()) {
+                    case Chat.ChatType.SINGLE_VALUE:
+                        //发送消息过来了
+                        msgReq(userDetail.getUserId(), ctx, header, msgReq);
+                        break;
+                    case Chat.ChatType.ROOM_VALUE:
+                        roomMsgReq(userDetail.getUserId(), ctx, header, msgReq);
+                        break;
+                }
                 break;
             default:
                 break;
@@ -48,10 +60,9 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
      * 3. 转发给对方（发布到redis）
      * 4. 响应
      */
-    private void msgReq(int userId, ChannelHandlerContext ctx, IMPacket header) throws Exception {
-
-        //获取msg req
-        var msgReq = Chat.MsgReq.parseFrom(header.getBody());
+    private void msgReq(int userId, ChannelHandlerContext ctx,
+                        IMPacket header, Chat.MsgReq msgReq)
+            throws Exception {
 
         //1. 保存到数据库，返回接口为是否成功
         boolean already = false;
@@ -91,5 +102,41 @@ public class ChatService implements PacketInboundHandler<UserDetail, IMPacket> {
         var packetResp = IMUtil.copyPacket(header, msgRespBuilder);
         ctx.writeAndFlush(packetResp);
 
+    }
+
+    /**
+     * 聊天室不做排重
+     */
+    private void roomMsgReq(int userId, ChannelHandlerContext ctx,
+                            IMPacket header, Chat.MsgReq msgReq) {
+
+        var msgOutBuilder = Chat.MsgOut.newBuilder();
+        msgOutBuilder.setFrom(userId);
+        msgOutBuilder.setTo(msgReq.getTo());
+        msgOutBuilder.setMsgId(msgReq.getMsgId());
+
+        msgOutBuilder.setChatType(msgReq.getChatType());
+        msgOutBuilder.setMsgType(msgReq.getMsgType());
+
+        msgOutBuilder.setUri(msgReq.getUri());
+        msgOutBuilder.setContent(msgReq.getContent());
+
+        var msgOut = IMUtil.newPacket(Packet.ServiceId.CHAT,
+                Chat.CommandId.CHAT_MSG_OUT,
+                msgOutBuilder);
+        //异步的，很快，不会阻塞
+        var users = roomManager.getUsers(msgReq.getTo());
+        for (UserDetail user : users) {
+            if (user.getUserId() != userId) {
+                messageManager.sendMessage(user, msgOut);
+            }
+        }
+
+        //3. 给出响应，告诉发送方，服务器已经收到消息了
+        var msgRespBuilder = Chat.MsgResp.newBuilder();
+        msgRespBuilder.setMsgId(msgReq.getMsgId());
+
+        var packetResp = IMUtil.copyPacket(header, msgRespBuilder);
+        ctx.writeAndFlush(packetResp);
     }
 }

@@ -8,12 +8,10 @@ import com.imvector.proto.entity.UserDetail;
 import com.imvector.proto.impl.IMPacket;
 import com.imvector.proto.system.IMSystem;
 import io.netty.channel.Channel;
-import io.netty.handler.timeout.IdleStateHandler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
